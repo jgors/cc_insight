@@ -134,13 +134,14 @@ if __name__ == '__main__':
                 tweet_graph.update_graph(tweet)
 
                 cleaned_text = clean_text(text, count_unicode=True)
-                print 'tweet_cnt: {}, num_graph_nodes: {}, avg_deg: {}'.format(cnt, len(tweet_graph.graph), tweet_graph.get_graph_avg_degree_of_all_nodes())
+                # print 'tweet_cnt: {}, num_graph_nodes: {}, avg_deg: {}'.format(cnt, len(tweet_graph.graph), tweet_graph.get_graph_avg_degree_of_all_nodes())
                 ft1.write('{} (timestamp: {})\n'.format(cleaned_text, created_at))
                 ft2.write('{}\n'.format(tweet_graph.get_graph_avg_degree_of_all_nodes()))
 
             except:     # sort of an anti-pattern to exception handle on main like this, but I want to play it safe.
                 # TODO write to logger that this tweet failed
-                print "Tweet on ln {} of file failed in the pipeline".format(cnt)
+                # print "Tweet on ln {} of file failed in the pipeline".format(cnt)
+                pass
 
         ft1.write('\n{} tweets contained unicode.'.format(unicode_tweets_count))
     close_files([ft1, ft2])
