@@ -108,8 +108,10 @@ if __name__ == '__main__':
         tweets_incomming_path = abspath(tweets_data_incoming)
     else:
         # for the actual test data set 
-        tweets_incomming_path = abspath(pjoin(os.pardir, 'tweet_input', 'tweets.txt'))     
-    tweet_output_path = pjoin(os.pardir, 'tweet_output')
+        # tweets_incomming_path = abspath(pjoin(os.pardir, 'tweet_input', 'tweets.txt'))     
+        tweets_incomming_path = abspath(pjoin('tweet_input', 'tweets.txt'))     
+    # tweet_output_path = pjoin(os.pardir, 'tweet_output')
+    tweet_output_path = pjoin('tweet_output')
 
     tweet_graph = TweetsGraph()
     ft1 = open(abspath(pjoin(tweet_output_path, 'ft1.txt')), 'w')
