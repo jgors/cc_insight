@@ -151,7 +151,8 @@ if __name__ == '__main__':
                 ft2.write('{}\n'.format(tweet_graph.get_graph_avg_degree_of_all_nodes()))
 
             except Exception as e:  #  don't normally exception handle in main like this, but play it safe on unknown data.
-                logging.exception("Tweet on ln {} failed work.  Exception {}".format(cnt, e))
+                # logging.exception("Tweet on ln {} failed work.  Exception {}".format(cnt, e))
+                pass
 
         ft1.write('\n{} tweets contained unicode.'.format(unicode_tweets_count))
     close_files([ft1, ft2])
