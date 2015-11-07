@@ -6,11 +6,11 @@ just comment out the line to use `python` in `run.sh`, and uncomment the line to
 
 #### Also, unit-tests can be run from the root directory of this repo via:
 
-(you might need to install the `nose` python package first with something like `pip` [1])
+(you might need to install the `nose` python package first with something like `pip` [2])
 
 `nosetests -s -v`
 
-Of course if not already installed, `pip` might have to be installed as well.
+Of course if that's not already installed either, then `pip` would have to be installed as well.
 
 
 [1] on Ubuntu/Debian `pypy` can be installed very easily with:
