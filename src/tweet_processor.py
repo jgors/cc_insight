@@ -21,6 +21,7 @@ from calendar import timegm
 
 from tweets_graph import TweetsGraph
 
+
 # FAQ says, "all whitespace escape characters should be replaced with a single space"
 #   And the C language defines whitespace characters to be: 
 #   """...space (" "), horizontal tab ("\t"), new-line ("\n"), 
@@ -66,7 +67,8 @@ def clean_text(text_to_convert, count_unicode=False):
         ascii_txt = codecs_encode(text_to_convert, 'ascii', 'ignore')
 
     ### replace the whitespace chars with a single space
-    # ws_replaced_txt = ''.join([' ' if char in chars_to_replace_with_space else char for char in ascii_txt])
+    # ws_replaced_txt = ''.join([' ' if char in chars_to_replace_with_space 
+                                   # else char for char in ascii_txt])
     white_space_chars = "\t\n\r\v\f"
     whitespace_replacements = ' ' * len(white_space_chars)
     trans_table = maketrans(white_space_chars, whitespace_replacements)
@@ -130,28 +132,26 @@ if __name__ == '__main__':
 
     tweet_graph = TweetsGraph(time_window=60)
 
-    # with codecs.open(tweets_incomming_path, 'r', encoding='utf-8', errors='ignore') as tweets_incomming:  
     with open(tweets_incomming_path, 'r') as tweets_incomming:  
         # all tweets from the api are utf-8 encoded:
         # https://dev.twitter.com/overview/api/counting-characters
         for cnt, tweet in enumerate(tweets_incomming, start=1):
-            
-            # try:
-            tweet_dict =  json_loads(tweet)     # json.loads uses utf-8 decoding by default
-            text = tweet_dict["text"]
-            created_at = tweet_dict["created_at"]
-            hashtags = [hashtag['text'] for hashtag in tweet_dict['entities']['hashtags']]
-            tweet = Tweet(created_at, hashtags) 
-            tweet_graph.update_graph(tweet)
+            try:
+                tweet_dict =  json_loads(tweet)     # json.loads uses utf-8 decoding by default
+                text = tweet_dict["text"]
+                created_at = tweet_dict["created_at"]
+                hashtags = [hashtag['text'] for hashtag in tweet_dict['entities']['hashtags']]
+                tweet = Tweet(created_at, hashtags) 
+                tweet_graph.update_graph(tweet)
 
-            cleaned_text = clean_text(text, count_unicode=True)
-            # logging.debug('tweet_cnt: {}, num_graph_nodes: {}, avg_deg: {}'.format(
-            #               cnt, len(tweet_graph.graph), tweet_graph.get_graph_avg_degree_of_all_nodes()))
-            ft1.write('{} (timestamp: {})\n'.format(cleaned_text, created_at))
-            ft2.write('{}\n'.format(tweet_graph.get_graph_avg_degree_of_all_nodes()))
+                cleaned_text = clean_text(text, count_unicode=True)
+                # logging.debug('tweet_cnt: {}, num_graph_nodes: {}, avg_deg: {}'.format(
+                #               cnt, len(tweet_graph.graph), tweet_graph.get_graph_avg_degree_of_all_nodes()))
+                ft1.write('{} (timestamp: {})\n'.format(cleaned_text, created_at))
+                ft2.write('{}\n'.format(tweet_graph.get_graph_avg_degree_of_all_nodes()))
 
-            # except Exception as e:  #  don't normally exception handle in main like this, but play it safe on unknown data.
-                # logging.exception("Tweet on ln {} failed work.  Exception {}".format(cnt, e))
+            except Exception as e:  #  don't normally exception handle in main like this, but play it safe on unknown data.
+                logging.exception("Tweet on ln {} failed work.  Exception {}".format(cnt, e))
 
         ft1.write('\n{} tweets contained unicode.'.format(unicode_tweets_count))
     close_files([ft1, ft2])
