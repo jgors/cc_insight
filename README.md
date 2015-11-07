@@ -13,7 +13,7 @@ just comment out the line to use `python` in `run.sh`, and uncomment the line to
 Of course if that's not already installed either, then `pip` would have to be installed as well.
 
 
-[1] on Ubuntu/Debian `pypy` can be installed very easily with:
+[1] on Ubuntu/Debian `pypy` can be installed very easily with (will be an outdated version, but will likely still work):
 
 `sudo apt-get install pypy`
 
