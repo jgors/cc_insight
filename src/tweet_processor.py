@@ -146,7 +146,8 @@ if __name__ == '__main__':
 
                 cleaned_text = clean_text(text, count_unicode=True)
                 # logging.debug('tweet_cnt: {}, num_graph_nodes: {}, avg_deg: {}'.format(
-                #               cnt, len(tweet_graph.graph), tweet_graph.get_graph_avg_degree_of_all_nodes()))
+                              # cnt, len(tweet_graph.graph), tweet_graph.get_graph_avg_degree_of_all_nodes()))
+                # print 'tweet_cnt: {}, num_graph_nodes: {}, avg_deg: {}'.format(cnt, len(tweet_graph.graph), tweet_graph.get_graph_avg_degree_of_all_nodes())
                 ft1.write('{} (timestamp: {})\n'.format(cleaned_text, created_at))
                 ft2.write('{}\n'.format(tweet_graph.get_graph_avg_degree_of_all_nodes()))
 
