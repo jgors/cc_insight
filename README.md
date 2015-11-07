@@ -1,7 +1,12 @@
-can run unit-tests from inside `src` directory with:
+Note:  This is to be run with `python2.7` (not compatable with `python3`)
 
-`nosetests -s -v tests`
+Also, unit-tests can be run from the root directory of this repo via:
 
-Note: would need to install the nose python package first with:
+(you would need to install the `nose` python package first with something like pip [1])
 
-`pip install nose --user --upgrade`
+`nosetests -s -v`
+
+Of course if not already installed, `pip` might have to be installed as well.
+
+
+[1] `pip install nose --user --upgrade`

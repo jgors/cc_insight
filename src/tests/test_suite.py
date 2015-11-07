@@ -10,11 +10,14 @@ import sys
 import os
 import json
 
-sys.path.insert(0, os.path.abspath(os.pardir))
+repo_root = os.getcwd()
+sys.path.insert(0, os.path.abspath(repo_root))
 from tweet_processor import Tweet
 from tweet_processor import clean_text
 from tweets_graph import TweetsGraph 
 from nose.tools import ok_ 
+
+tests_dir = os.path.join(repo_root, 'src', 'tests')
 
 
 class TestTweet(object):
@@ -38,7 +41,7 @@ class TestTweetsGraph(object):
 
 
     def test_update_graph_with_example_from_instructions_manually(self):
-        '''exact example from the online instructions done manually: 
+        '''exact example from the online instructions done manually here: 
         https://github.com/InsightDataScience/coding-challenge#building-the-twitter-hashtag-graph'''
 
         
@@ -64,7 +67,7 @@ class TestTweetsGraph(object):
 
         # Third tweet to the graph
         self.tweet_graph.update_graph(Tweet('Thu Oct 29 17:51:55 +0000 2015', hashtags=['Apache'])) 
-        # graph stays unchanged since there was only one hashtag passed in
+        # graph stays unchanged since there was only one hashtag passed in for this tweet
         assert self.tweet_graph.graph == {'apache': set(['spark', 'hadoop', 'storm']), 
                                            'spark': set(['apache']), 
                                            'hadoop': set(['apache', 'storm']), 
@@ -100,7 +103,7 @@ class TestTweetsGraph(object):
 
         # Last tweet to the graph
         self.tweet_graph.update_graph(Tweet('Thu Oct 29 17:52:05 +0000 2015', hashtags=['Apache'])) 
-        # graph gets updated and now the Spark and Apache edge is remove b/c that tweet was older than 60s 
+        # graph gets updated and now the Spark and Apache edge is remove b/c the tweet with them in it was older than 60s 
         assert self.tweet_graph.graph == {'flink': set(['spark']), 
                                            'hadoop': set(['apache', 'storm']), 
                                            'storm': set(['apache', 'hadoop']), 
@@ -111,16 +114,15 @@ class TestTweetsGraph(object):
         assert self.tweet_graph.get_graph_avg_degree_of_all_nodes() == '1.67' 
         
        
-        # now test this against the actual data from the instructions (loaded from file)
+        # now test this against graph we just did manually with the same data loaded (also from the instructions 
         tweets_test_graph2 = TweetsGraph()
-        testfile = os.path.join('tests', 'test_data', 'data_for_building_hashtag_graph.txt')
+        testfile = os.path.join(tests_dir, 'test_data', 'data_for_building_hashtag_graph.txt')
         with open(testfile, 'r') as f: 
             for tweet in f:
                 tweet_dict = json.loads(tweet)
                 hashtags = [hashtag['text'] for hashtag in tweet_dict['entities']['hashtags']]
                 tweets_test_graph2.update_graph(Tweet(tweet_dict['created_at'], hashtags))
-        # and check that the graph output here is the same as for the previous example that
-        # was just performed manually  
+        # check that the graph output here is the same as for the previous example that was just performed manually  
         assert tweets_test_graph2.graph == self.tweet_graph.graph 
 
 
@@ -131,24 +133,22 @@ def check_clean_text(testfile, tweet1_correct, tweet2_correct):
             tweet_dict = json.loads(tweet)
             tweet_text = tweet_dict['text'] 
 
-            if cnt == 1:    # the first tweet should be ascii
+            if cnt == 1:    # the first tweet is ascii
                 cleaned_txt = clean_text(tweet_text, count_unicode=False)
                 ok_(cleaned_txt == tweet1_correct)
-            elif cnt == 2:  # the second tweet should be unicode
+            elif cnt == 2:  # the second tweet is unicode
                 cleaned_txt = clean_text(tweet_text, count_unicode=True)
                 ok_(cleaned_txt == tweet2_correct)
 
 
 def test_clean_text():
     
-    testfile1 = os.path.join('tests', 'test_data', 'data_from_instructions_orig.txt')
-    testfile2 = os.path.join('tests', 'test_data', 'data_from_instructions_modified_with_more_esc_chars.txt')
-
+    testfile1 = os.path.join(tests_dir, 'test_data', 'data_from_instructions_orig.txt')
     tweet1_correct = "Spark Summit East this week! #Spark #Apache"
     tweet2_correct = "I'm at Terminal de Integrao do Varadouro in Joo Pessoa, PB https://t.co/HOl34REL1a"
     yield check_clean_text, testfile1, tweet1_correct, tweet2_correct
 
+    testfile2 = os.path.join(tests_dir, 'test_data', 'data_from_instructions_modified_with_more_esc_chars.txt')
     tweet1_correct = "Spark/ Summit\ East this  week! #Spark  #Apache"
     tweet2_correct = "I'm at /Terminal\" de\ Integrao do  Varadouro in Joo Pessoa, PB  https://t.co/HOl34REL1a"
     yield check_clean_text, testfile2, tweet1_correct, tweet2_correct
-

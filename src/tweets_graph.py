@@ -3,79 +3,91 @@
 #----------------------------------------------------------------
 # Author: Jason Gors <jasonDOTgorsATgmail>
 # Creation Date: 10-31-2015
-# Purpose:  graph data-structure for maintaining a tweet graph for 
-#           handling new incoming tweets.
+# Purpose:  `TweetsGraph` instances are used to create a graph data-structure, 
+#           which can then be used to maintain a graph of adjacent tweets 
+#           within a rolling time window. 
 #----------------------------------------------------------------
 
 from itertools import permutations
 
 
 class TweetsGraph(object):
-    """ Initalized without any arguments and returns an empty graph data- 
-    structure.  The graph is then built and maintained by succesively  
-    passing `Tweet` instances into the `update_graph` method. 
+    """Initalized with a `time_window` argument (default: 60) and returns 
+    an empty graph data-structure.  The graph can then be built and maintained 
+    by succesively passing `Tweet` instances into the `update_graph` method. 
         eg. 
             tweet_graph = TweetsGraph()
             tweet = Tweet(created_at, hashtags)
             tweet_graph.update_graph(tweet)
 
-        (see `Tweet` class doc for it's details)
+        (see `Tweet` class in `tweet_processing.py` for it's details)
 
         
     Methods
     -------
-    update_graph: updates the graph by adding new hashtags as nodes and 
-        their adjacent hashtags as neighboring nodes.
+    update_graph: updates a graph instance by adding all permutations of a 
+        tweet's hashtag pairs as nodes and adjacent neighboring nodes.
 
 
     Attributes
     ----------
-    graph: dict where each key is a hashtag/node and each corresponding value  
-        is a set of it's adjacent neighboring hashtags/nodes (eg. adjancey set)
+    graph: (dict) where each key is a node/hashtag and each corresponding value  
+        is a set of it's adjacent neighboring nodes/hashtags (eg. adjacency set)
+
+    time_window: (int) that specifies how long back (in seconds) old tweets should 
+        remain in the graph before being removed (Default: 60)
 
 
     Returns
     -------
-    empty graph
+    empty graph data-structure
 
 
     Notes
     -----
-    Each succesive tweet submitted into the graph (via the `update_graph` 
-    method) adds the new tweets into the graph (if there are any) and 
-    removes all of the graph's node neighbors that are older than 60 seconds 
-    from the latest tweet."""
+    Each succesive tweet submitted into a graph instance (via the `update_graph` 
+    method) adds the new tweet's hashtags into the graph (if there are any) 
+    and removes all hashtag node neighbors (and any nodes themselves if they 
+    are empty) that are older than the specified `time_window` when compared to 
+    the latest tweet."""
 
 
-    def __init__(self):
+    def __init__(self, time_window=60):
         self.graph = {}
+        self.time_window = time_window
         self.__unique_timestamp_list = []
         self.__dict_of_timestamps_and_list_of_hashtag_sets = {}
 
 
     def __update_active_hashtag_nodes(self, current_timestamp, current_hashtags):
-        '''This does all of the work in maintaining that only tweets that 
-        are within 60 seconds prior to the current tweet are used in making up
-        the hashtag graph.  This uses a first in, first out (fifo) convention for 
+        '''This does all of the work in maintaining that only tweets that are  
+        within the `time_window` prior to the current tweet are used in making up
+        the hashtag graph.  This uses a first in, first out (fifo) ordering for 
         maintaining that the newest timestamped hashtags are located at the end 
-        of the list and the oldest hashtags at the beginning of the list. 
+        of the list and the oldest hashtag timestamps at the beginning of the list. 
+
+        
+        Parameters
+        ----------
+        current_timestamp:  epoch based time (int)
+        current_hashtags:   (set) of hashtags for most recent tweet
+
 
         Notes
         -----
         When each new tweet is passed in, a test checks whether it is timestamped  
-        as more than 60s after the first/oldest tweet in the list, if so, then the    
-        test checks whether the same holds true for the second tweet in the list, 
-        and so on, until the test comes to a tweet that is within 60s of itself (or 
-        comes to the end of he list), whereupon it then gets rid of all of the 
-        tweets that are more than 60s away from this latest tweet; lastly, the
-        newest tweet gets appended onto the end of the list.'''
+        as more than the `time_window` amount allowed after the first/oldest tweet 
+        was passed into the list; if so, then the test checks whether the same holds 
+        true for the second tweet in the list, and so on, until the test comes to a 
+        tweet that is within the allowed `time_window` (or reaches the end of he list), 
+        whereupon all tweets that are more than the allowed `time_window` away from 
+        this latest tweet are removed; finally, the newest tweet gets appended onto 
+        the end of the list so as to serve as the next most recent tweet for next time
+        around.'''
 
-        # potentially much smaller memory footprint on higher freq data -- this 
-        # will scale much better if the tweet frequency is high.
-        #
         # To track what should & shouldn't be included in the graph, this uses 
         # - a list of (unique) timestamps (fifo), along with
-        # - a dict with a timestamp (for each sec) as the keys and with a list 
+        # - a dict with a timestamp (for each sec) as the keys and a list 
         # of corresponding hashtag sets as the values; like: 
         #
         # unique_timestamp_list = [timeOldest ... timeNewest]
@@ -91,7 +103,7 @@ class TweetsGraph(object):
             next_most_recent_timestamp = self.__unique_timestamp_list[-1]
             if next_most_recent_timestamp < current_timestamp:
                 for cnt, old_timestamp in enumerate(self.__unique_timestamp_list):
-                    if (current_timestamp - old_timestamp) > 60.0:
+                    if (current_timestamp - old_timestamp) > self.time_window:
                         if old_timestamp in self.__dict_of_timestamps_and_list_of_hashtag_sets:
                             list_of_hashtag_sets = self.__dict_of_timestamps_and_list_of_hashtag_sets[old_timestamp]
                             for set_of_old_hashtags in list_of_hashtag_sets:
@@ -103,16 +115,23 @@ class TweetsGraph(object):
                             self.__unique_timestamp_list = self.__unique_timestamp_list[cnt:] 
                         break
                 self.__unique_timestamp_list.append(current_timestamp)
-            else:   # next_most_recent_timestamp == current_timestamp b/c tweets will be in sorted order
-                # so don't need to append current_timestamp to __unique_timestamp_list 
-                # b/c the current_timestamp isn't unique
+            else:  # next_most_recent_timestamp == current_timestamp b/c tweets will 
+                # be in sorted order, so don't need to append current_timestamp to 
+                # __unique_timestamp_list b/c the current_timestamp isn't unique then 
                 pass
         self.__manage_timestamps_and_hashtag_dict(current_hashtags, current_timestamp)
 
 
     def __manage_timestamps_and_hashtag_dict(self, current_hashtags, current_timestamp):
-        ''' Determines what the state of the node/neighbor pairings are relative 
-        to when their timestamp was'''
+        '''Determines what the state of the node/neighbor pairings are relative 
+        to when their timestamp occurred
+
+
+        Parameters
+        ----------
+        current_hashtags:   (set) of hashtags for most recent tweet
+        current_timestamp:  epoch based time (int)
+        '''
 
         if current_timestamp in self.__dict_of_timestamps_and_list_of_hashtag_sets:
             if current_hashtags:
@@ -127,10 +146,12 @@ class TweetsGraph(object):
 
 
     def __remove_hashtags_from_graph(self, old_hashtags):
-        '''If a hashtag node and neighbor pair is in the graph, 
-        then this removes it.
+        '''If an old hashtag node and neighbor pair is in the graph, then this removes it.
 
-        old_hashtags:  set of hashtags for an older tweet to be removed
+
+        Parameters
+        ----------
+        old_hashtags:  (set) of hashtags for an older tweet to be removed
         '''
 
         for ht1, ht2 in permutations(old_hashtags, 2):
@@ -146,12 +167,13 @@ class TweetsGraph(object):
             
 
     def update_graph(self, tweet):
-        '''Delegation of building up and/or removing nodes from the 
-        graph as they are passed into this method.
+        '''Delegation of building up and/or removing nodes from the graph 
+        as they are passed into this method.
+
 
         Parameters
         ----------
-        tweet:  an instance of class Tweet
+        tweet:  an instance of class Tweet (see `tweet_processor.py`)
         '''
         current_hashtags = tweet.hashtags
         current_timestamp = tweet.timestamp
@@ -169,10 +191,9 @@ class TweetsGraph(object):
     def get_graph_avg_degree_of_all_nodes(self):
         '''Calculates and returns the average degree for all nodes in all 
         graphs and subgraphs'''
+
         if self.graph:
-            total_edge_len = 0
-            for neighbors in self.graph.itervalues(): 
-                total_edge_len += len(neighbors)
+            total_edge_len = sum([len(neighbors) for neighbors in self.graph.itervalues()]) 
             avg_deg = total_edge_len / float(len(self.graph))
             return "{:.2f}".format(round(avg_deg, 2))
         else:

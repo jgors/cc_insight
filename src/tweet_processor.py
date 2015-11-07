@@ -3,91 +3,101 @@
 #----------------------------------------------------------------
 # Author: Jason Gors <jasonDOTgorsATgmail>
 # Creation Date: 10-31-2015
-# Purpose:  creates an interface for new incoming tweets via the Tweet 
-#           class where it cleans incoming tweets and generates a timestamp
-#           so the tweet can be passed into a TweetsGraph instance
+# Purpose:  Creates an interface for incoming tweets via the `Tweet` class,  
+#           which standardizes the tweet's text and generates a timestamp 
+#           so that the tweet can then be passed into a `TweetsGraph`
+#           instance (which is based on a rolling time window).
 #----------------------------------------------------------------
 import os
-from os.path import abspath
-from os.path import join as pjoin
+from os import path
 import sys
+import logging
 from json import loads as json_loads 
 from string import translate
 from string import maketrans
 from codecs import encode as codecs_encode
-import codecs 
 from time import strptime
 from calendar import timegm
 
 from tweets_graph import TweetsGraph
 
+# FAQ says, "all whitespace escape characters should be replaced with a single space"
+#   And the C language defines whitespace characters to be: 
+#   """...space (" "), horizontal tab ("\t"), new-line ("\n"), 
+#      vertical tab ("\v"), and form-feed ("\f")  -- from [1] and [2]. so i'll use those
+# [1] https://en.wikipedia.org/wiki/Whitespace_character#Programming_languages
+chars_to_replace_with_space = {"\t", "\n", "\r", "\v", "\f"}  #also there is str.isspace()
+
+# Also, FAQ says only keep ascii chars 32-127 
+# set_of_ascii_we_want_to_keep = set([chr(char) for char in xrange(32,127)])  
 
 unicode_tweets_count = 0
 
 
 def clean_text(text_to_convert, count_unicode=False):
-    '''Removes unicode and escape chars from passed in text_to_convert
+    '''Removes unicode and escape chars from text_to_convert;
+    also counts the number of tweets which contained unicode. 
 
     Parameters
     ----------
-    text_to_convert: str to normalize 
-    count_unicode:  either True (for tweet text) or False (for hashtags)
+    text_to_convert: (str) to standardize 
+    count_unicode:  either (True) for tweet text or (False) for 
+        a tweet hashtag
+
 
     Returns
     -------
-    an ascii str without unicode and escape chars
+    an ascii (str) without unicode and escape chars
+
     
-    Refer to for more details on tweets: 
+    Refer to here for more details on tweet formating: 
     https://dev.twitter.com/streaming/overview/processing
     '''
-
+            
     try:
+        # https://docs.python.org/2/howto/unicode.html
         ascii_txt = codecs_encode(text_to_convert, 'ascii')
     except UnicodeEncodeError:
         if count_unicode:
-            global unicode_tweets_count  # works, but is hacky 
+            global unicode_tweets_count  # fine for now
             unicode_tweets_count += 1
 
-        # Remove all non ASCII characters from the unicode string
+        # remove all non ascii chars from the unicode string
         ascii_txt = codecs_encode(text_to_convert, 'ascii', 'ignore')
-        # ascii_txt = str(''.join([c for c in text if ord(c) < 128])) # same
-    
-    
-    ### first replace the whitespace chars with space
-    white_space_chars = "\n\t\r"
+
+    ### replace the whitespace chars with a single space
+    # ws_replaced_txt = ''.join([' ' if char in chars_to_replace_with_space else char for char in ascii_txt])
+    white_space_chars = "\t\n\r\v\f"
     whitespace_replacements = ' ' * len(white_space_chars)
     trans_table = maketrans(white_space_chars, whitespace_replacements)
     ws_replaced_txt = translate(ascii_txt, trans_table)
-    # trans_table = maketrans(table_in, table_out)
 
-    # return ws_replaced_txt 
+    return ws_replaced_txt 
 
-    chars_to_remove = ''.join([chr(char) for char in range(0,32) + range(128,256)])
-    escaped_txt = translate(ws_replaced_txt, None, chars_to_remove)
-    # ''.join([chr(char) for char in xrange(32,127)])   # we want to keep these
-
-    return escaped_txt 
 
 
 class Tweet(object):
-    ''' Used to create a tweet instance to pass into a TweetsGraph.
+    '''Holds relevant information from a tweet so that class instances 
+    can be passed into a TweetsGraph instance (to build a hashtag graph).
+
 
     Attributes
     ----------
-    timestamp: takes tweet `created_at` field and converts to epoch based time; 
-        used to better perform time based comparisons and manipulations.  
+    timestamp: takes tweet `created_at` (str) field and converts to an 
+        epoch based time format; used to better perform time based 
+        comparisons and manipulations.
 
-    hashtags: takes list of a tweet's hashtags, where unicode and 
-        escape chars are removed.  Will either return empty set or a 
-        set of length >= 2'''
+    hashtags: takes a (list) of a tweet's hashtags and returns them with 
+        unicode and escape chars removed.  Will either return an empty 
+        set or a set of length >= 2'''
 
 
     def __init__(self, created_at, hashtags):
         '''
         Parameters
         ----------
-        created_at: `created_at` field str obtained from the Twitter api json output
-        hashtags:   list of hashtags strs obtained from the Twitter's api json output
+        created_at: `created_at` field (str) obtained from the Twitter api json output
+        hashtags:   (list) of hashtags (strs) obtained from the Twitter api json output
         '''
 
         self.timestamp = timegm(strptime(created_at, "%a %b %d %H:%M:%S +0000 %Y")) 
@@ -102,46 +112,46 @@ class Tweet(object):
 if __name__ == '__main__':
 
     if sys.argv[1:]:
-        # test other datasets by providing a path as single arg to script
+        # test other datasets by providing a path as single arg to this script
         tweets_data_incoming = sys.argv[1]
-        assert os.path.isfile(tweets_data_incoming), "Error: need to pass in a data file that exists."
-        tweets_incomming_path = abspath(tweets_data_incoming)
+        assert path.isfile(tweets_data_incoming), "Error: need to pass in a data file that exists."
+        tweets_incomming_path = path.abspath(tweets_data_incoming)
     else:
-        # for the actual test data set 
-        # tweets_incomming_path = abspath(pjoin(os.pardir, 'tweet_input', 'tweets.txt'))     
-        tweets_incomming_path = abspath(pjoin('tweet_input', 'tweets.txt'))     
-    # tweet_output_path = pjoin(os.pardir, 'tweet_output')
-    tweet_output_path = pjoin('tweet_output')
+        # to run the actual test data set (needs to be run from root of repo!) 
+        tweets_incomming_path = path.abspath(path.join('tweet_input', 'tweets.txt'))     
+    tweet_output_path = path.abspath('tweet_output')
 
-    tweet_graph = TweetsGraph()
-    ft1 = open(abspath(pjoin(tweet_output_path, 'ft1.txt')), 'w')
-    ft2 = open(abspath(pjoin(tweet_output_path, 'ft2.txt')), 'w')
+    if not path.isdir(tweet_output_path):
+        os.makedirs(tweet_output_path)
+
+    ft1 = open(path.abspath(path.join(tweet_output_path, 'ft1.txt')), 'w')
+    ft2 = open(path.abspath(path.join(tweet_output_path, 'ft2.txt')), 'w')
     close_files = lambda l: [f.close() for f in l]
 
-    with codecs.open(tweets_incomming_path, 'r', encoding='utf-8', errors='ignore') as tweets_incomming:  
-        # NOTE all tweets from the api are utf-8 encoded:
+    tweet_graph = TweetsGraph(time_window=60)
+
+    # with codecs.open(tweets_incomming_path, 'r', encoding='utf-8', errors='ignore') as tweets_incomming:  
+    with open(tweets_incomming_path, 'r') as tweets_incomming:  
+        # all tweets from the api are utf-8 encoded:
         # https://dev.twitter.com/overview/api/counting-characters
         for cnt, tweet in enumerate(tweets_incomming, start=1):
-            tweet_dict =  json_loads(tweet)
             
-            if 'limit' in tweet_dict:
-                continue
-            try:
-                text = tweet_dict["text"]
-                created_at = tweet_dict["created_at"]
-                hashtags = [hashtag['text'] for hashtag in tweet_dict['entities']['hashtags']]
-                tweet = Tweet(created_at, hashtags) 
-                tweet_graph.update_graph(tweet)
+            # try:
+            tweet_dict =  json_loads(tweet)     # json.loads uses utf-8 decoding by default
+            text = tweet_dict["text"]
+            created_at = tweet_dict["created_at"]
+            hashtags = [hashtag['text'] for hashtag in tweet_dict['entities']['hashtags']]
+            tweet = Tweet(created_at, hashtags) 
+            tweet_graph.update_graph(tweet)
 
-                cleaned_text = clean_text(text, count_unicode=True)
-                # print 'tweet_cnt: {}, num_graph_nodes: {}, avg_deg: {}'.format(cnt, len(tweet_graph.graph), tweet_graph.get_graph_avg_degree_of_all_nodes())
-                ft1.write('{} (timestamp: {})\n'.format(cleaned_text, created_at))
-                ft2.write('{}\n'.format(tweet_graph.get_graph_avg_degree_of_all_nodes()))
+            cleaned_text = clean_text(text, count_unicode=True)
+            # logging.debug('tweet_cnt: {}, num_graph_nodes: {}, avg_deg: {}'.format(
+            #               cnt, len(tweet_graph.graph), tweet_graph.get_graph_avg_degree_of_all_nodes()))
+            ft1.write('{} (timestamp: {})\n'.format(cleaned_text, created_at))
+            ft2.write('{}\n'.format(tweet_graph.get_graph_avg_degree_of_all_nodes()))
 
-            except:     # sort of an anti-pattern to exception handle on main like this, but I want to play it safe.
-                # TODO write to logger that this tweet failed
-                # print "Tweet on ln {} of file failed in the pipeline".format(cnt)
-                pass
+            # except Exception as e:  #  don't normally exception handle in main like this, but play it safe on unknown data.
+                # logging.exception("Tweet on ln {} failed work.  Exception {}".format(cnt, e))
 
         ft1.write('\n{} tweets contained unicode.'.format(unicode_tweets_count))
     close_files([ft1, ft2])
