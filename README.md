@@ -1,11 +1,11 @@
-This is to be run with `python2.7` (not compatable with `python3`)
+#### This is to be run with `python2.7` (not compatable with `python3`)
 
-(NOTE!  if `pypy` is available, then it should definitely be used instead;  
+##### (NOTE!  if `pypy` is available, then it should definitely be used instead;  
 just comment out the line to use `python` in the `run.sh` file, with the line to 
-use `pypy` that file [see 1]) 
+use `pypy` in that file [see 1]) 
 
 
-Also, unit-tests can be run from the root directory of this repo via:
+#### Also, unit-tests can be run from the root directory of this repo via:
 
 (you might need to install the `nose` python package first with something like pip [1])
 
