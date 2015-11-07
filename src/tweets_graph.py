@@ -103,7 +103,7 @@ class TweetsGraph(object):
             next_most_recent_timestamp = self.__unique_timestamp_list[-1]
             if next_most_recent_timestamp < current_timestamp:
                 for cnt, old_timestamp in enumerate(self.__unique_timestamp_list):
-                    if (current_timestamp - old_timestamp) > self.time_window:
+                    if (current_timestamp - old_timestamp) >= self.time_window:
                         if old_timestamp in self.__dict_of_timestamps_and_list_of_hashtag_sets:
                             list_of_hashtag_sets = self.__dict_of_timestamps_and_list_of_hashtag_sets[old_timestamp]
                             for set_of_old_hashtags in list_of_hashtag_sets:
