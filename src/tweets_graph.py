@@ -114,7 +114,7 @@ class TweetsGraph(object):
                             pass
                     else:
                         if cnt > 0: # don't recopy if we don't need to (eg. when cnt is 0)
-                            # after every sec increment this happens, but there are many tweets w/in each sec tick; (api data ~50 a sec)
+                            # after every 1 sec increment this happens, but there are many tweets w/in each sec tick; (api data ~50 a sec)
                             # -- so this happens after every avg_N_of_tweets_per_second, to a list of only constant size `time_window`.
                             # now even on their firehouse data this copying of `unique_timestamp_list` would still be of only size `time_window`,
                             # and would happen even more infrequenqently b/c there would be a way larger avg_N_of_tweets_per_second
