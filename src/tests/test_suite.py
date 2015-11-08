@@ -114,7 +114,7 @@ class TestTweetsGraph(object):
         assert self.tweet_graph.get_graph_avg_degree_of_all_nodes() == '1.67' 
         
        
-        # now test this against graph we just did manually with the same data loaded (also from the instructions 
+        # now test this against the graph we just did manually, but with the same data loaded from file
         tweets_test_graph2 = TweetsGraph()
         testfile = os.path.join(tests_dir, 'test_data', 'data_for_building_hashtag_graph.txt')
         with open(testfile, 'r') as f: 
