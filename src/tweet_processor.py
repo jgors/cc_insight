@@ -28,6 +28,11 @@ from tweets_graph import TweetsGraph
 #      vertical tab ("\v"), and form-feed ("\f")  -- from [1] and [2]. so i'll use those
 # [1] https://en.wikipedia.org/wiki/Whitespace_character#Programming_languages
 chars_to_replace_with_space = {"\t", "\n", "\r", "\v", "\f"}  #also there is str.isspace()
+white_space_chars = "\t\n\r\v\f"
+whitespace_replacements = ' ' * len(white_space_chars)
+# ws_replaced_txt = ''.join([' ' if char in chars_to_replace_with_space 
+                                # else char for char in ascii_txt])
+trans_table = maketrans(white_space_chars, whitespace_replacements)
 
 # Also, FAQ says only keep ascii chars 32-127 
 # set_of_ascii_we_want_to_keep = set([chr(char) for char in xrange(32,127)])  
@@ -67,11 +72,6 @@ def clean_text(text_to_convert, count_unicode=False):
         ascii_txt = codecs_encode(text_to_convert, 'ascii', 'ignore')
 
     ### replace the whitespace chars with a single space
-    # ws_replaced_txt = ''.join([' ' if char in chars_to_replace_with_space 
-                                   # else char for char in ascii_txt])
-    white_space_chars = "\t\n\r\v\f"
-    whitespace_replacements = ' ' * len(white_space_chars)
-    trans_table = maketrans(white_space_chars, whitespace_replacements)
     ws_replaced_txt = translate(ascii_txt, trans_table)
 
     return ws_replaced_txt 

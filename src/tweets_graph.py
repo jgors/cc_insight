@@ -175,17 +175,15 @@ class TweetsGraph(object):
         ----------
         tweet:  an instance of class Tweet (see `tweet_processor.py`)
         '''
-        current_hashtags = tweet.hashtags
-        current_timestamp = tweet.timestamp
-        if current_hashtags:
+        if tweet.hashtags:
             # add all new pairs of hashtags into the graph
-            for ht1, ht2 in permutations(current_hashtags, 2):
+            for ht1, ht2 in permutations(tweet.hashtags, 2):
                 if ht1 not in self.graph: 
                     self.graph[ht1] = {ht2}
                 else:
                     self.graph[ht1].update({ht2})
 
-        self.__update_active_hashtag_nodes(current_timestamp, current_hashtags)
+        self.__update_active_hashtag_nodes(tweet.timestamp, tweet.hashtags)
 
 
     def get_graph_avg_degree_of_all_nodes(self):
