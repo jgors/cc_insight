@@ -115,10 +115,14 @@ class TweetsGraph(object):
                     else:
                         if cnt > 0: # don't recopy if we don't need to (eg. when cnt is 0)
                             # after every 1 sec increment this happens, but there are many tweets w/in each sec tick; (api data ~50 a sec)
-                            # -- so this happens after every avg_N_of_tweets_per_second, to a list of only constant size `time_window`.
-                            # now even on their firehouse data this copying of `unique_timestamp_list` would still be of only size `time_window`,
-                            # and would happen even more infrequenqently b/c there would be a way larger avg_N_of_tweets_per_second
-                            # being delivered between performing this slicing operation.
+                            # -- so this happens after every avg_N_of_tweets_per_second, to a list of only constant size (at max) `time_window`.
+                            # now even on their firehouse data this copying of `unique_timestamp_list` would still be of only (at max) size 
+                            # `time_window`, and would happen even more infrequenqently b/c there would be a way larger avg_N_of_tweets_per_second
+                            # being delivered between performing this slicing operation.  Also, this seems very fault tolerant -- if the connection 
+                            # got dropped between tweets, it would be quite efficient to empty the graph of only timestamps that were in  
+                            # `unique_timestamp_list`, rather than instead of having to traverse all possible timestamps between the potentially
+                            #  much newer `current_timestamp` and all possible timestamps that could have occured between then and the recorded 
+                            # oldest timestamp (if we just used vars instead for oldest and newest).
                             self.__unique_timestamp_list = self.__unique_timestamp_list[cnt:]
                         break
                 self.__unique_timestamp_list.append(current_timestamp)
